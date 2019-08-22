@@ -2,11 +2,15 @@ import requests, time, os, random
 import pandas as pd 
 import numpy as np
 from bs4 import BeautifulSoup
-import scrapingclass as sc
+from scraping_class import Connector
 
 class dr_scraper():
     def __init__(self, logfile, links_file = 'dr_links.csv', contents_file = 'dr_contents.csv'):
-        self.connector = sc.Connector(logfile)
+        self.connector = Connector(logfile)
+        self.delay = 1
+        self.links_filename = 'dr_links.csv'
+        self.contents_filename = 'dr_contents.csv'
+        self.article_counts_filename = 'dr_article_counts.csv'
     
     def get_dr_article_links(self, searchterms, start, end):
 
@@ -22,9 +26,9 @@ class dr_scraper():
                 url = url.format(searchterm, start, end, page)
 
                 try:
-                    response, id_ = self.connector.get(url, 'Datagathering searchterm: {0}, page: {1}'.format(searchterm, page))
+                    response, _ = self.connector.get(url, 'Datagathering searchterm: {0}, page: {1}'.format(searchterm, page))
                 except:
-                    print('Connection error')
+                    print('Break at page {0} of searchterm {1}'.format(page, searchterm))
                     break
                 soup = BeautifulSoup(response.text, features='lxml')
                 article_tags = soup.findAll('a', attrs = {'class': 'heading-medium'})
@@ -35,18 +39,24 @@ class dr_scraper():
                 
                 article_links += [a['href'] for a in article_tags]
                 page += 1
-                time.sleep(random.uniform(1, 2))
+
+                time.sleep(random.uniform(self.delay, self.delay*1.5))
             
             filename = 'dr_links_searchterm_{}.csv'.format(searchterm)
+            
             pd.DataFrame({'Link': article_links, 'Searchterm': searchterm}).to_csv(filename, header = True, index = False)
+            
             filenames.append(filename)
 
+        #Concatenate the batch-files just created
         df = pd.concat([pd.read_csv(filename, header = 0) for filename in filenames], axis = 0)
-        df.drop_duplicates('Link', inplace = True)
-        
-        self.link_filenames = 'dr_links.csv'
 
-        df.to_csv(self.link_filenames, index = False)
+        if os.path.isfile(self.links_filename):
+            df = pd.concat([pd.read_csv(self.links_filename, header = 0), df], axis = 0) #if existing links-file, concatenate new with existing
+
+        df.drop_duplicates('Link', inplace = True) #Drop duplicate URLs
+
+        df.to_csv(self.links_filename, index = False)
 
         for filename in filenames:
             os.remove(filename) #no need to check for existence as the filenames were just created
@@ -63,7 +73,7 @@ class dr_scraper():
         for i, link in enumerate(article_links):
             article_data = {}
             try:
-                response, id_ = self.connector.get(link, 'data_gathering')
+                response, _ = self.connector.get(link, 'data_gathering')
 
                 print('Now at link number {}'.format(i))
                 
@@ -80,7 +90,7 @@ class dr_scraper():
 
             articles.append(article_data)
 
-            time.sleep(random.uniform(1, 2))
+            time.sleep(random.uniform(self.delay, self.delay*1.5))
 
         return articles
 
@@ -90,44 +100,77 @@ class dr_scraper():
         should an error be raised during runtime."""
 
         if not article_links:
-            article_links = pd.read_csv(self.link_filenames, header = 0)['Link']
+            article_links = pd.read_csv(self.links_filename, header = 0)['Link']
 
-        filenames = []
+        if os.path.isfile(self.contents_filename): #if existing contentsfile
+            contents_df = pd.read_csv(self.contents_filename, header = 0)
+            article_links = [link for link in article_links if not contents_df['URL'].str.contains(link).any()] #to avoid scraping the same URL twice
+
+        filenames = [] #Storing filenames to append later
 
         for i in range(0, len(article_links), batch_size):
+            #Get content from batch and save to a file
             filename = 'dr_contents_article_{0}_to_{1}.csv'.format(i, i+batch_size)
             batch = article_links[i: i+batch_size]
             pd.DataFrame(self.get_dr_article_contents(batch)).to_csv(filename, header = True, index = False)
-            filenames.append(filename)
+            filenames.append(filename) #save filename for later
         
         df = pd.concat([pd.read_csv(filename, header = 0) for filename in filenames], axis = 0) #concat all batch-files
-        df['Publish data'] = pd.to_datetime(df['Publish date']) #parse dates
-        df.to_csv('dr_contents.csv', header = True, index = False) #save the complete file
+
+        if os.path.isfile(self.contents_filename): #if existing contentsfile, append that to new files
+            df = pd.concat([contents_df, df], axis = 0)
+        
+        df['Publish date'] = pd.to_datetime(df['Publish date']) #parse dates
+
+        df.to_csv(self.contents_filename, header = True, index = False) #save the complete file
 
         for filename in filenames: #delete batch-files
             os.remove(filename) #no need to check for existence as the files were just created
 
-
     
-    def get_dr_article_count(start, end, profect_name = 'Get article counts'):
-        date_rng = [date.strftime(%d%m%Y) for date in pd.date_range(start, end)]
+    def get_dr_article_count(self, start, end, project_name = 'Get article counts'):
+        """Gets the total number of articles published for each day in the range defined by start and end.
+
+        -- start: start date as string or DateTime
+        -- end: end date as string or DateTime
+        -- project_name: name of project, passed to connector
+        """
+        date_rng = pd.date_range(start, end)
+        strdate_rng = [date.strftime(r'%d%m%Y') for date in date_rng]
         url = 'https://www.dr.dk/nyheder/allenyheder/{}'
-        for date in date_rng:
-            self.connector.get(url.format(date), project_name)
-            soup = BeautifulSoup(, features = 'lxml')
+        
+        counter = []
+
+        for date, strdate in zip(date_rng, strdate_rng):
+            article = {}
+
+            print('Now at date {}'.format(date))
+
+            response, _ = self.connector.get(url.format(strdate), project_name)
+            soup = BeautifulSoup(response.text, features = 'lxml')
             section_tag = soup.find('section', attrs = {'class': 'dr-list'}) #section tag containing list of articles from that date
-            len(findAll('article', attrs = {'class', 'heading-small'})) #each article is contained in an <article>
+            
+            article['Date'] = date
+            article['Count'] = len(section_tag.findAll('article', attrs = {'class', 'heading-small'})) #each article is contained in an <article>
+
+            counter.append(article)
+
+            time.sleep(random.uniform(self.delay, self.delay*1.5))
+
+        pd.DataFrame(counter).to_csv(self.article_counts_filename, header = True, index = False)
 
 def append_files(files):
     df = pd.concat([pd.read_csv(f, header = 0, sep = ';') for f in files], axis = 0)
     df.to_csv('./data/{}_concat.csv'.format(files[0].split('.')[0]), index = False) #Save to csv named as the first file with 'concat' appended
 
-if __name__ == "__main__":
-    #dr_scraper_ = dr_scraper('dr_log.csv')
-    #searchterms = ['migrant', 'asylansøg', 'immigrant', 'flygtning']
-    #dr_scraper_.get_dr_article_links(searchterms = searchterms, start = '2007-01-01', end = '2013-12-31')
-    #dr_scraper_.batcher()
+def scraping_section(dr_scraper_):
+    searchterms = ['indvandrer']
+    dr_scraper_.get_dr_article_links(searchterms = searchterms, start = '2018-01-01', end = '2019-08-22')
+    dr_scraper_.batcher()
 
-    lst = ['dr_log{}.csv'] #['dr_contents{}.csv', 'dr_links{}.csv', 'dr_log{}.csv']
-    for i in range(len(lst)):
-        append_files([lst[i].format(''), lst[i].format('2')])
+if __name__ == "__main__":
+    dr_scraper_ = dr_scraper('dr_log.csv')
+
+    scraping_section(dr_scraper_)
+
+    #dr_scraper_.get_dr_article_count('15-08-2019', '21-08-2019', project_name = 'Testing')
