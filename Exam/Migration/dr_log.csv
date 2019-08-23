@@ -14854,3 +14854,17 @@ id,project,connector_type,t,delta_t,url,redirect_url,response_size,response_code
 2290;Get article counts;requests;1566544122.699698;-5.855581045150757;https://www.dr.dk/nyheder/allenyheder/28022013;https://www.dr.dk/nyheder/allenyheder/28022013;105333;200;True;
 2291;Get article counts;requests;1566544130.0656939;-5.3823020458221436;https://www.dr.dk/nyheder/allenyheder/01032013;https://www.dr.dk/nyheder/allenyheder/01032013;93056;200;True;
 2292;Get article counts;requests;1566544137.014876;-3.762186050415039;https://www.dr.dk/nyheder/allenyheder/02032013;https://www.dr.dk/nyheder/allenyheder/02032013;68844;200;True;
+2293;Get article counts;requests;1566544142.235713;-4.602179050445557;https://www.dr.dk/nyheder/allenyheder/03032013;https://www.dr.dk/nyheder/allenyheder/03032013;76043;200;True;
+2294;Get article counts;requests;1566544148.314781;-5.286448001861572;https://www.dr.dk/nyheder/allenyheder/04032013;https://www.dr.dk/nyheder/allenyheder/04032013;95957;200;True;
+2295;Get article counts;requests;1566544154.954171;-4.937130928039551;https://www.dr.dk/nyheder/allenyheder/05032013;https://www.dr.dk/nyheder/allenyheder/05032013;94598;200;True;
+2296;Get article counts;requests;1566544161.222626;-5.667865991592407;https://www.dr.dk/nyheder/allenyheder/06032013;https://www.dr.dk/nyheder/allenyheder/06032013;98941;200;True;
+2297;Get article counts;requests;1566544168.400387;-5.280627965927124;https://www.dr.dk/nyheder/allenyheder/07032013;https://www.dr.dk/nyheder/allenyheder/07032013;99920;200;True;
+2298;Get article counts;requests;1566544175.006436;-5.467463970184326;https://www.dr.dk/nyheder/allenyheder/08032013;https://www.dr.dk/nyheder/allenyheder/08032013;97106;200;True;
+2299;Get article counts;requests;1566544181.933674;-3.971695899963379;https://www.dr.dk/nyheder/allenyheder/09032013;https://www.dr.dk/nyheder/allenyheder/09032013;68763;200;True;
+2300;Get article counts;requests;1566544187.367022;-4.17651891708374;https://www.dr.dk/nyheder/allenyheder/10032013;https://www.dr.dk/nyheder/allenyheder/10032013;73540;200;True;
+2301;Get article counts;requests;1566544193.049643;-6.010770797729492;https://www.dr.dk/nyheder/allenyheder/11032013;https://www.dr.dk/nyheder/allenyheder/11032013;109343;200;True;
+2302;Get article counts;requests;1566544200.397411;-6.078873872756958;https://www.dr.dk/nyheder/allenyheder/12032013;https://www.dr.dk/nyheder/allenyheder/12032013;98822;200;True;
+2303;Get article counts;requests;1566544207.914906;-5.981379985809326;https://www.dr.dk/nyheder/allenyheder/13032013;https://www.dr.dk/nyheder/allenyheder/13032013;97878;200;True;
+2304;Get article counts;requests;1566544215.2171772;-5.675969839096069;https://www.dr.dk/nyheder/allenyheder/14032013;https://www.dr.dk/nyheder/allenyheder/14032013;97564;200;True;
+2305;Get article counts;requests;1566544222.2344;-5.238324880599976;https://www.dr.dk/nyheder/allenyheder/15032013;https://www.dr.dk/nyheder/allenyheder/15032013;98114;200;True;
+2306;Get article counts;requests;1566544229.0003278;-3.922445058822632;https://www.dr.dk/nyheder/allenyheder/16032013;https://www.dr.dk/nyheder/allenyheder/16032013;67021;200;True;
