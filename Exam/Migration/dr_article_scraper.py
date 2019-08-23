@@ -7,7 +7,7 @@ from scraping_class import Connector
 class dr_scraper():
     def __init__(self, logfile, links_file = 'dr_links.csv', contents_file = 'dr_contents.csv'):
         self.connector = Connector(logfile)
-        self.delay = 1
+        self.delay = 0.7
         self.links_filename = 'dr_links.csv'
         self.contents_filename = 'dr_contents.csv'
         self.article_counts_filename = 'dr_article_counts.csv'
@@ -145,32 +145,36 @@ class dr_scraper():
             article = {}
 
             print('Now at date {}'.format(date))
+            try:
+                response, _ = self.connector.get(url.format(strdate), project_name)
+                soup = BeautifulSoup(response.text, features = 'lxml')
+                section_tag = soup.find('section', attrs = {'class': 'dr-list'}) #section tag containing list of articles from that date
+                
+                article['Date'] = date
+                article['Count'] = len(section_tag.findAll('article', attrs = {'class', 'heading-small'})) #each article is contained in an <article>
 
-            response, _ = self.connector.get(url.format(strdate), project_name)
-            soup = BeautifulSoup(response.text, features = 'lxml')
-            section_tag = soup.find('section', attrs = {'class': 'dr-list'}) #section tag containing list of articles from that date
-            
-            article['Date'] = date
-            article['Count'] = len(section_tag.findAll('article', attrs = {'class', 'heading-small'})) #each article is contained in an <article>
+                counter.append(article)
 
-            counter.append(article)
+                time.sleep(random.uniform(self.delay, self.delay*1.5))
+            except:
+                print('\n{} raised an error.\n'.format(date))
 
-            time.sleep(random.uniform(self.delay, self.delay*1.5))
+        df = pd.DataFrame(counter)
 
-        pd.DataFrame(counter).to_csv(self.article_counts_filename, header = True, index = False)
-
-def append_files(files):
-    df = pd.concat([pd.read_csv(f, header = 0, sep = ';') for f in files], axis = 0)
-    df.to_csv('./data/{}_concat.csv'.format(files[0].split('.')[0]), index = False) #Save to csv named as the first file with 'concat' appended
+        if os.path.isfile(self.article_counts_filename):
+            df = pd.concat([pd.read_csv(self.article_counts_filename, header = 0), df], axis = 0)
+            df['Date'].drop_duplicates(inplace = True)
+        
+        df.to_csv(self.article_counts_filename, header = True, index = False)
 
 def scraping_section(dr_scraper_):
     searchterms = ['indvandrer']
-    dr_scraper_.get_dr_article_links(searchterms = searchterms, start = '2018-01-01', end = '2019-08-22')
+    dr_scraper_.get_dr_article_links(searchterms = searchterms, start = '2007-01-01', end = '2009-12-31')
     dr_scraper_.batcher()
 
 if __name__ == "__main__":
     dr_scraper_ = dr_scraper('dr_log.csv')
 
-    scraping_section(dr_scraper_)
+    #scraping_section(dr_scraper_)
 
-    #dr_scraper_.get_dr_article_count('15-08-2019', '21-08-2019', project_name = 'Testing')
+    dr_scraper_.get_dr_article_count('01-01-2007', '21-08-2019')
