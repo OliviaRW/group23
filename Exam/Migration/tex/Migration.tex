@@ -1,3 +1,4 @@
+
 \documentclass[10pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
@@ -41,10 +42,11 @@
 
 \begin{document}
 	\begin{enumerate}
-		\item Date range is from 01-01-2007 to 21-08-2019. Words included in search was asylansøg, immigrant, flygtning, migrant.
+		\item Date range is from 01-01-2007 to 21-08-2019. Words included in search was asylansøg, immigrant, flygtning, migrant, invandrer.
 		\item So called webfeatures were not included as they did not follow the general structure of articles
-		\item Scraping took a total of 9 hours split on two computers. In total this adds up to x amount of calls.\\
-		The files were concatenated using:
+		\item Scraping articles containing words of interest took a total of 11 hours split on two computers. In total this adds up to x amount of calls.\\
+		The files generated were concatenated using:
+		
 \begin{lstlisting}[language=Python]
 def append_files(files):
 	df = pd.concat([pd.read_csv(f, header = 0, sep = ';') for f in files], axis = 0)
@@ -58,7 +60,9 @@ for i in range(len(lst)):
 	\subsection{TODO}
 	\begin{enumerate}
 		\item Get total article count.
-		\item Include in search 'invandrer'
+		\item STATSB, ASYLTYPE, Tid
+		% https://api.statbank.dk/v1/data/VAN5/JSONSTAT?valuePresentation=Value&timeOrder=Ascending&STATSB=Verdensdele&ASYLTYPE=BRU&Tid=\%3E\%3D2007K1
+		% https://api.statbank.dk/v1/data/VAN77/JSONSTAT?valuePresentation=Value&timeOrder=Ascending&OPHOLD=sum(1%2C2)&Tid=%3E%3D2007K1
 	\end{enumerate}
 	\subsection{Documentation}
 		The process of scraping the DR homepage for articles are done within \lstinline[language=Python]|class dr_scraper|. This is done to simplify storing names of different files that are created. The class uses a couple of methods that are described below:
@@ -76,5 +80,5 @@ for i in range(len(lst)):
 			If a csv-file with contents is already in the cwd the new content is extended to this file. Also URLs in passed \python{article_links} already present in the contents file is removed from the list to ensure a URL is not scraped twice.
 			
 		\subsubsection{\python{def get_dr_article_count(self, start, end, project_name = 'Get article counts')}}
-			Fetches the total number of articles published for each day in the range defined by \python{start} and \python{end}. The function uses 'https://www.dr.dk/nyheder/allenyheder/' that lists all articles published on a particular date. When done it saves the data to a csv-file.
+			Fetches the total number of articles published for each day in the range defined by \python{start} and \python{end}. The function uses 'https://www.dr.dk/nyheder/allenyheder/' that lists all articles published on a particular date, appended to the URL. When done it saves the data to a csv-file.
 \end{document}

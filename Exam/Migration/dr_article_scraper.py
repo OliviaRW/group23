@@ -121,6 +121,9 @@ class dr_scraper():
             df = pd.concat([contents_df, df], axis = 0)
         
         df['Publish date'] = pd.to_datetime(df['Publish date']) #parse dates
+        df['Date month'] = pd.to_datetime(df['Publish date']).dt.to_period('M') #add column with "YYYY-mm"
+        
+        df.dropna(how = any, axis = 0, inplace = True) #Drop rows contaning nan values
 
         df.to_csv(self.contents_filename, header = True, index = False) #save the complete file
 
