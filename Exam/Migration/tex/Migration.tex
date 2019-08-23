@@ -43,7 +43,7 @@
 \begin{document}
 	\begin{enumerate}
 		\item Date range is from 01-01-2007 to 21-08-2019. Words included in search was asylansøg, immigrant, flygtning, migrant, invandrer.
-		\item So called webfeatures were not included as they did not follow the general structure of articles
+		\item So called webfeatures were not included as they did not follow the general structure of articles. There's 58 nan values in the contents data, which are removed
 		\item Scraping articles containing words of interest took a total of 11 hours split on two computers. In total this adds up to x amount of calls.\\
 		The files generated were concatenated using:
 		
@@ -56,11 +56,12 @@ lst = ['dr_contents{}.csv', 'dr_links{}.csv', 'dr_log{}.csv']
 for i in range(len(lst)):
 	append_files([lst[i].format(''), lst[i].format('2')])
 \end{lstlisting}
+	\item stopord.txt is from:\\ "https://gist.github.com/berteltorp/0cf8a0c7afea7f25ed754f24cfc2467b?fbclid=IwAR2IMQuckiTXHfCwMYW4XH5c2wPVsNMgWM6goT4ZXtQqLoGGwS9Mo0Dyo5Q"
+	Words manually added to stopwords: \\
+	\python{['I', 'sige']}
 	\end{enumerate}
 	\subsection{TODO}
 	\begin{enumerate}
-		\item Get total article count.
-		\item STATSB, ASYLTYPE, Tid
 		% https://api.statbank.dk/v1/data/VAN5/JSONSTAT?valuePresentation=Value&timeOrder=Ascending&STATSB=Verdensdele&ASYLTYPE=BRU&Tid=\%3E\%3D2007K1
 		% https://api.statbank.dk/v1/data/VAN77/JSONSTAT?valuePresentation=Value&timeOrder=Ascending&OPHOLD=sum(1%2C2)&Tid=%3E%3D2007K1
 	\end{enumerate}

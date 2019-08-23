@@ -3,9 +3,10 @@ import numpy as np
 import pandas as pd
 import string as stringmodule
 import lemmy
-from nltk import word_tokenize
-from nltk.corpus import stopwords
 import collections
+from unicodedata import normalize
+import re
+import matplotlib.pyplot as plt
 
 
 
@@ -22,24 +23,36 @@ def lemmatize_strings(body_text, language = 'da'):
     if not hasattr(body_text, '__iter__'):
         raise TypeError('Passed argument should be a sequence.')
     
-    sr = stopwords.words('danish')
-    lemmatizer = lemmy.load(language) #load danish lemmatizing dictionary
+    #sr = stopwords.words('danish')
+    lemmatizer = lemmy.load(language) #load lemmatizing dictionary
 
-    punctuation = r'?:!.,;)(-.,/#!$%^&*;:{}=\-_`~()`\'' #Characters that are considered punctuation
+    #delete -- punctuation = r'?:!.,;)(-.,/#!$%^&*;:{}=\-_`~()`\'' #Characters that are considered punctuation
     
     lemma_list = [] #list to store each lemmatized string 
 
-    for string in body_text:
-        #remove punctuation
-        string = string.translate(str.maketrans('', '', stringmodule.punctuation))
+    word_regex = re.compile('[a-zA-Z0-9æøåÆØÅ]+')
 
-        #Split sentence into words and stopwords
-        lemmatized_string = [word for word in word_tokenize(str(string)) if not word in sr] 
+    for string in body_text:
+        #remove punctuation and split words
+        matches = word_regex.findall(string)
+
+        with open('stopord.txt', 'r') as sw:
+            #read the stopwords file
+            stopwords = sw.read().split('\n')
+            #split words and lowercase them unless they are all caps
+            lemmatized_string = [word.lower() if not word.isupper() else word for word in matches]
+            
+            #remove words that are in the stopwords file
+            lemmatized_string = [word for word in lemmatized_string if not word in stopwords] 
+            
+            #lemmatize each word and choose the shortest word of suggested lemmatizations
+            lemmatized_string = [min(lemmatizer.lemmatize('', word), key=len) for word in lemmatized_string]
+
+            #remove words that are in the stopwords file
+            lemmatized_string = [word for word in lemmatized_string if not word in stopwords] 
+
         
-        #lemmatize each word and choose the shortest word of suggested lemmatizations
-        lemmatized_words = [min(lemmatizer.lemmatize('', word), key=len) for word in lemmatized_string]
-        
-        lemma_list.append(' '.join(lemmatized_words))
+        lemma_list.append(' '.join(lemmatized_string))
 
     return lemma_list if len(lemma_list) > 1 else lemma_list[0] #return list if list was passed, else return string
 
@@ -72,13 +85,37 @@ def count_occurences(body_text, dictionary = None, lemmatize = False, **kw):
         return [collections.Counter(string.split(' ')) for string in body_text]
     return 
 
-#def clean_data(df)
+def graph_word_frequencies(dictionary):
+    df = pd.read_csv('dr_contents.csv', header = 0)
+    grouped_df = df.groupby('Date month')['Text'].apply(lambda x: ' '.join(x))
+    freq_df = pd.DataFrame(count_occurences(grouped_df, dictionary = dictionary, lemmatize = True, language = 'da'), index = grouped_df.index)
+    fig, ax = plt.subplots()
+    x = freq_df.index
+    for column in freq_df.columns:
+        ax.plot(x, freq_df[column], label = column)
+    
+    ax.legend()
+    
+    ax.set_xticklabels(x, rotation = 45) #rotate labels
+
+    #remove most labels
+    for i, label in enumerate(ax.get_xticklabels()):
+        if i % 12 != 0 and i % 6 != 0:
+            label.set_visible(False)
+
+    plt.show()
+
+    
 
 if __name__ == "__main__":
+    dictionary = ['flygtning', 'migrant', 'asylansøger', 'indvandrer', "immigrant"]
+    #print(graph_word_frequencies(dictionary))
+    
     df = pd.read_csv('dr_contents.csv', header = 0)
-    grouped_df = ' '.join(df.groupby('Date month')['Text'].apply(lambda x: ' '.join(x))[-10:])
-    counters = count_occurences(grouped_df, lemmatize = True, language = 'da')
-    for c in counters:
-        print(c.most_common(20), end = '\n\n')
+    counts = count_occurences(df['Text'], dictionary=dictionary, lemmatize = True)
+    #print(pd.Series([sum(count.values()) for count in counts]))
+    dr_frequent_articles = df[pd.Series([sum(count.values()) for count in counts])>2]
+    dr_frequent_articles.to_csv('dr_frequent_articles.csv', header = True, index = False)
+
 
     
