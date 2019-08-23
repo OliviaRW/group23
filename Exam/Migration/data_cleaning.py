@@ -80,10 +80,9 @@ def count_occurences(body_text, dictionary = None, lemmatize = False, **kw):
     #    counter = collections.Counter(body_text.split())
     #    counter_list.append({key: counter[key] for key in dictionary})
     if dictionary:
-        return [{key: collections.Counter(string.split(' '))[key] for key in dictionary} for string in body_text]
+        return [collections.Counter({key: string.count(key) for key in dictionary}) for string in body_text]
     else:
         return [collections.Counter(string.split(' ')) for string in body_text]
-    return 
 
 def graph_word_frequencies(dictionary):
     df = pd.read_csv('dr_contents.csv', header = 0)
@@ -108,13 +107,13 @@ def graph_word_frequencies(dictionary):
     
 
 if __name__ == "__main__":
-    dictionary = ['flygtning', 'migrant', 'asylansøger', 'indvandrer', "immigrant"]
+    dictionary = ['flygtning', 'migrant', 'asylansøg', 'indvandre', "immigrant"]
     #print(graph_word_frequencies(dictionary))
     
     df = pd.read_csv('dr_contents.csv', header = 0)
     counts = count_occurences(df['Text'], dictionary=dictionary, lemmatize = True)
     #print(pd.Series([sum(count.values()) for count in counts]))
-    dr_frequent_articles = df[pd.Series([sum(count.values()) for count in counts])>2]
+    dr_frequent_articles = df[pd.Series(sum(count.values()) for count in counts)>2]
     dr_frequent_articles.to_csv('dr_frequent_articles.csv', header = True, index = False)
 
 
