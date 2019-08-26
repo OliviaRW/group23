@@ -16,7 +16,7 @@ def contains_string(text, string):
     """
     return 1 if string in str(text) else 0
 
-def word_frquencies(dictionary = None):
+def word_frequencies(dictionary = None):
     df = pd.read_csv('dr_frequent_articles.csv', header = 0, parse_dates = ['Publish date']) #load data
 
     grouped_df = df.groupby(df['Publish date'].dt.to_period('w'))['Text'].apply(lambda x: ' '.join(x)) #group by month and join strings within the same month.
@@ -79,7 +79,7 @@ def count_occurences(body_text, dictionary = None, lemmatize = False, **kw):
     -- body_text: string or list of strings.
     -- dictionary: list of strings to be counted. If None every word is counted
     -- lemmatize: bool that indicates wether the text should be lemmatized
-    **kw: keyword arguments for lemmatize_string()
+    -- **kw: keyword arguments for lemmatize_string()
     """
 
     if lemmatize:
@@ -99,25 +99,20 @@ def count_occurences(body_text, dictionary = None, lemmatize = False, **kw):
 def plot_word_frequencies(df, dictionary = None, top_n = None):
     """Plots a plot of word frequencies over time.
 
+    -- df: dataframe containing word counts, with x as index and words as columns
     -- dictionary: words that should be included in the plot
+    -- top_n: if no dictionary is passed the function plots the top_n most common words
     """
-
-    #df = pd.read_csv('dr_frequent_articles.csv', header = 0) #load data
-
-    #grouped_df = df.groupby(df['Date'].dt.to_period('w'))['Text'].apply(lambda x: ' '.join(x)) #group by month and join strings within the same month.
-    #counts = count_occurences(grouped_df, dictionary = dictionary, lemmatize = True, language = 'da') #count words
-
-    #if not dictionary:
-    #    dictionary = [count[0] for count in sum(counts, collections.Counter()).most_common(top_n)]
-    #    counts = [{key: count[key] for key in dictionary} for count in counts]
-
-    #freq_df = pd.DataFrame(counts, index = grouped_df.index) #dataframe of counts with words as columns and months as index
 
     fig, ax = plt.subplots()
     x = df.index
 
-    for column in list(df.columns):
-        ax.plot(x, df[column], label = column)
+    if dictionary:
+        for column in dictionary:
+            ax.plot(x, df[column], label = column)
+    else:
+        for column in list(df.columns):
+            ax.plot(x, df[column], label = column)
 
     ax.legend()
     
@@ -130,36 +125,76 @@ def plot_word_frequencies(df, dictionary = None, top_n = None):
 
     plt.show()
 
-def article_volume_by_word(df, dictionary = None, lemmatize = False, **kw):
-    
+def article_volume_by_word(df, dictionary, groupby = 'w', lemmatize = False, **kw):
+    """Function that counts the number of articles containing each of the words in dictionary.
+    Returns a dataframe with groupby as index and words as columns.
+
+    -- df: Dataframe contaning the articles.
+    -- dictionary: list of words to look for in articles.
+    -- groupby: code that pandas should group the datetime columnn by.
+    -- lemmatize: bool that indicates wether the text should be lemmatized
+    -- **kw: keyword arguments for lemmatize_string()
+    """
+
     if lemmatize:
         df['Text'] = lemmatize_strings(df['Text'], **kw) #lemmatize if requested
 
     df['Publish date'] = pd.to_datetime(df['Publish date'])
 
-    counts = {}
+    counts = {} #Dictionary to hould Series of counts for each word in dictionary
     
     for string in dictionary:
-        grouped_df = df['Text'].apply(contains_string, string = string)
-        counts[string] = grouped_df.groupby(df['Publish date'].dt.to_period('w')).sum()
+        grouped_df = df['Text'].apply(contains_string, string = string) #Check if text contains string
+        counts[string] = grouped_df.groupby(df['Publish date'].dt.to_period('w')).sum() #Group and sum
 
-    pd.DataFrame.from_dict(counts).to_csv('article_volume_by_word.csv', header = True, index = True)
+    pd.DataFrame.from_dict(counts).to_csv('article_volume_by_word.csv', header = True, index = True) #Save DataFrame
+
+def get_frequent_articles(df, dictionary, n = 3):
+    """Function to filter out articles that does not contain a certain amount of words in dictionary.
+    
+    -- df: DataFrame containing articles. Must have a 'Text' column.
+    -- dictionary: words that should be counted as significant.
+    -- n: the minimum number of dictionary words an article should contain to be considered 'frequent'
+    """
+
+    counts = count_occurences(df['Text'], dictionary = dictionary, lemmatize = True)
+
+    dr_frequent_articles = df[pd.Series(sum(count.values()) for count in counts) >= 3]
+
+    dr_frequent_articles.to_csv('dr_frequent_articles.csv', header = True, index = False)
+
+def clean_article_counts(filename, categories, subcategories = None):
+    """Function to remove articles from uninteresting categories.
+
+    -- filename: Path to file contaning articles and url
+    -- categories: list of categories that should be kept
+    """
+
+    df = pd.read_csv(filename, header = 0)
+
+    categories_series = df['URL'].str\
+                        .extract(r'https://www.dr.dk//(\w+/?\w+)/')[0]\
+                        .apply(lambda x: x.split('/') if '/' in x else [x, np.nan]) #apply regex to extract categories
+    
+    df['Category'] = categories_series.str[0]
+    df['Subcategory'] = categories_series.str[1]
+
+    df = pd.concat([df[df['Category'] == category] for category in categories]) #Remove categories not in list
+
+    if subcategories: #remove subcategories not in list
+        df = pd.concat([df[df['Subcategory'] == subcategory].copy() for subcategory in subcategories])
+
+    df.to_csv('cleaned_' + filename, header = True, index = False)
+
+def clean_dr_articles():
+    df = pd.read_csv('dr_contents.csv', header = 0)
+    dictionary = ['flygtning', 'migrant', 'asylansøg', 'indvandre', 'immigrant']
+    
+    get_frequent_articles(df, dictionary)
+
+    clean_article_counts('dr_article_counts.csv', ['nyheder'])
+
 
 if __name__ == "__main__":
-    #dictionary = ['flygtning', 'migrant', 'asylansøg', 'indvandre', 'immigrant']
-    #plot_word_frequencies(top_n = 10)
-    
-    #df = pd.read_csv('dr_contents.csv', header = 0)
-    #counts = count_occurences(df['Text'], lemmatize = True).most_common(6)
-    #print(pd.Series([sum(count.values()) for count in counts]))
-    #dr_frequent_articles = df[pd.Series(sum(count.values()) for count in counts) > 2]
-    #dr_frequent_articles.to_csv('dr_frequent_articles.csv', header = True, index = False)
-
-    #df = pd.read_csv('article_volume_by_word.csv', header = 0, index_col = 'Publish date') #load data
-    #article_volume_by_word(df, dictionary=dictionary, lemmatize = True)
-
-    #plot_word_frequencies(df)
-
-    df = pd.read_csv('dr_frequent_articles.csv', header = 0)
-    df['Text lemmatized'] = lemmatize_strings(df['Text'])
-    df.to_csv('dr_frequent_articles.csv')
+    df = pd.read_csv('article_volume_by_word.csv', header = 0, index_col = 'Publish date')
+    plot_word_frequencies(df, dictionary=['flygtning', 'asylansøg'])
