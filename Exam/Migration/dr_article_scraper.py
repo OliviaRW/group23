@@ -7,7 +7,7 @@ from scraping_class import Connector
 class dr_scraper():
     def __init__(self, logfile, links_file = 'dr_links.csv', contents_file = 'dr_contents.csv'):
         self.connector = Connector(logfile)
-        self.delay = 0.7
+        self.delay = 0.5
         self.links_filename = 'dr_links.csv'
         self.contents_filename = 'dr_contents.csv'
         self.article_counts_filename = 'dr_article_counts.csv'
@@ -132,15 +132,15 @@ class dr_scraper():
 
     
     def get_dr_article_count(self, start, end, project_name = 'Get article counts'):
-        """Gets the total number of articles published for each day in the range defined by start and end.
+        """Gets publish date, title and url for all articles published for each day in the range defined by start and end.
 
         -- start: start date as string or DateTime
         -- end: end date as string or DateTime
-        -- project_name: name of project, passed to connector
+        -- project_name: name of project, passed to Connector
         """
-        date_rng = pd.date_range(start, end)
-        strdate_rng = [date.strftime(r'%d%m%Y') for date in date_rng]
-        url = 'https://www.dr.dk/nyheder/allenyheder/{}'
+        date_rng = pd.date_range(start, end) #generate date range
+        strdate_rng = [date.strftime(r'%d%m%Y') for date in date_rng] #Format used in the URL
+        baseurl = 'https://www.dr.dk/nyheder/allenyheder/{}'
         
         counter = []
 
@@ -149,14 +149,17 @@ class dr_scraper():
 
             print('Now at date {}'.format(date))
             try:
-                response, _ = self.connector.get(url.format(strdate), project_name)
+                response, _ = self.connector.get(baseurl.format(strdate), project_name)
                 soup = BeautifulSoup(response.text, features = 'lxml')
                 section_tag = soup.find('section', attrs = {'class': 'dr-list'}) #section tag containing list of articles from that date
                 
                 article['Date'] = date
-                article['Count'] = len(section_tag.findAll('article', attrs = {'class', 'heading-small'})) #each article is contained in an <article>
+                articlelist = section_tag.findAll('article', attrs = {'class', 'heading-small'}) #each article is contained in an <article>
 
-                counter.append(article)
+                counter += [{'Date': date, 
+                            'Title': article.find('a').text, 
+                            'URL': 'https://www.dr.dk/' + article.find('a')['href']} 
+                            for article in articlelist] #add articles to counter
 
                 time.sleep(random.uniform(self.delay, self.delay*1.5))
             except:
@@ -180,4 +183,4 @@ if __name__ == "__main__":
 
     #scraping_section(dr_scraper_)
 
-    dr_scraper_.get_dr_article_count('01-01-2007', '21-08-2019')
+    dr_scraper_.get_dr_article_count('01-01-2007', '21-08-2019', project_name = 'Test')
