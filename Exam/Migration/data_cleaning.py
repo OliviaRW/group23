@@ -30,7 +30,12 @@ def word_frequencies(dictionary = None):
 
     freq_df.to_csv('dr_wordfrequencies.csv', header = True)
 
-def lemmatize_strings(body_text, language = 'da'):
+def remove_stopwords(lst):
+    with open('stopord.txt', 'r') as sw:
+        #read the stopwords file 
+        return [word for word in lemmatized_string if not word in stopwords]
+
+def lemmatize_strings(body_text, language = 'da', remove_stopwords_ = True):
     """Function to lemmatize a string or a list of strings, i.e. remove prefixes. Also removes punctuations.
     
     -- body_text: string or list of strings
@@ -60,13 +65,15 @@ def lemmatize_strings(body_text, language = 'da'):
             lemmatized_string = [word.lower() if not word.isupper() else word for word in matches]
             
             #remove words that are in the stopwords file
-            lemmatized_string = [word for word in lemmatized_string if not word in stopwords] 
+            if remove_stopwords_:
+                lemmatized_string = remove_stopwords(lemmatized_string)
             
             #lemmatize each word and choose the shortest word of suggested lemmatizations
             lemmatized_string = [min(lemmatizer.lemmatize('', word), key=len) for word in lemmatized_string]
 
             #remove words that are in the stopwords file
-            lemmatized_string = [word for word in lemmatized_string if not word in stopwords] 
+            if remove_stopwords_:
+                lemmatized_string = remove_stopwords(lemmatized_string)
 
         lemma_list.append(' '.join(lemmatized_string))
 
@@ -120,7 +127,7 @@ def plot_word_frequencies(df, dictionary = None, top_n = None):
 
     #remove most labels
     for i, label in enumerate(ax.get_xticklabels()):
-        if i % 12 != 0 and i % 6 != 0:
+        if i % 11 != 0 and i % 5 != 0:
             label.set_visible(False)
 
     plt.show()
@@ -147,7 +154,7 @@ def article_volume_by_word(df, dictionary, groupby = 'w', lemmatize = False, **k
         grouped_df = df['Text'].apply(contains_string, string = string) #Check if text contains string
         counts[string] = grouped_df.groupby(df['Publish date'].dt.to_period('w')).sum() #Group and sum
 
-    pd.DataFrame.from_dict(counts).to_csv('article_volume_by_word.csv', header = True, index = True) #Save DataFrame
+    return pd.DataFrame.from_dict(counts)
 
 def get_frequent_articles(df, dictionary, n = 3):
     """Function to filter out articles that does not contain a certain amount of words in dictionary.
