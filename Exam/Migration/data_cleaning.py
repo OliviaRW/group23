@@ -25,7 +25,8 @@ def word_frequencies(dictionary = None):
 def remove_stopwords(lst):
     with open('stopord.txt', 'r') as sw:
         #read the stopwords file 
-        return [word for word in lst if not word in sw]
+        stopwords = sw.read().split('\n')
+        return [word for word in lst if not word in stopwords]
 
 def lemmatize_strings(body_text, language = 'da', remove_stopwords_ = True):
     """Function to lemmatize a string or a list of strings, i.e. remove prefixes. Also removes punctuations.
@@ -172,13 +173,17 @@ def clean_article_counts(filename, categories, subcategories = None):
                         .extract(r'https://www.dr.dk//(\w+/?\w+)/')[0]\
                         .apply(lambda x: x.split('/') if '/' in x else [x, np.nan]) #apply regex to extract categories
     
-    df['Category'] = categories_series.str[0]
-    df['Subcategory'] = categories_series.str[1]
+    df['Category'] = categories_series.str[0].str.lower()
+    df['Subcategory'] = categories_series.str[1].str.lower()
 
     df = pd.concat([df[df['Category'] == category] for category in categories]) #Remove categories not in list
 
     if subcategories: #remove subcategories not in list
         df = pd.concat([df[df['Subcategory'] == subcategory].copy() for subcategory in subcategories])
+
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    df = df[df['Date'].dt.year >= 2010]
 
     df.to_csv('cleaned_' + filename, header = True, index = False)
 

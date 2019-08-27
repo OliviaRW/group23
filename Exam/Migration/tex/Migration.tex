@@ -81,5 +81,5 @@ for i in range(len(lst)):
 			If a csv-file with contents is already in the cwd the new content is extended to this file. Also URLs in passed \python{article_links} already present in the contents file is removed from the list to ensure a URL is not scraped twice.
 			
 		\subsubsection{\python{def get_dr_article_count(self, start, end, project_name = 'Get article counts')}}
-			Fetches the total number of articles published for each day in the range defined by \python{start} and \python{end}. The function uses 'https://www.dr.dk/nyheder/allenyheder/' that lists all articles published on a particular date, appended to the URL. When done it saves the data to a csv-file.
+			Fetches publish date, title and url for all articles published for each day in the range defined by \python{start} and \python{end}. The function uses 'https://www.dr.dk/nyheder/allenyheder/' that lists all articles published on a particular date, appended to the URL. When done it saves the data to a csv-file.
 \end{document}

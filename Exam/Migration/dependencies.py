@@ -9,3 +9,8 @@ import matplotlib
 
 from bs4 import BeautifulSoup
 from scraping_class import Connector
+
+import seaborn as sns
+
+colorpalette = 'hls'
+sns.set_palette(colorpalette, 11)
