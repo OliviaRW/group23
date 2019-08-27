@@ -1,13 +1,4 @@
-import csv 
-import numpy as np
-import pandas as pd
-import string as stringmodule
-import lemmy
-import collections
-from unicodedata import normalize
-import re
-import matplotlib.pyplot as plt
-import datetime
+from dependencies import *
 
 def contains_string(text, string):
     """Helper function for article_volume_by_words.
@@ -34,7 +25,7 @@ def word_frequencies(dictionary = None):
 def remove_stopwords(lst):
     with open('stopord.txt', 'r') as sw:
         #read the stopwords file 
-        return [word for word in lemmatized_string if not word in stopwords]
+        return [word for word in lst if not word in sw]
 
 def lemmatize_strings(body_text, language = 'da', remove_stopwords_ = True):
     """Function to lemmatize a string or a list of strings, i.e. remove prefixes. Also removes punctuations.
@@ -59,22 +50,19 @@ def lemmatize_strings(body_text, language = 'da', remove_stopwords_ = True):
         #remove punctuation and split words
         matches = word_regex.findall(string)
 
-        with open('stopord.txt', 'r') as sw:
-            #read the stopwords file
-            stopwords = sw.read().split('\n')
-            #split words and lowercase them unless they are all caps
-            lemmatized_string = [word.lower() if not word.isupper() else word for word in matches]
-            
-            #remove words that are in the stopwords file
-            if remove_stopwords_:
-                lemmatized_string = remove_stopwords(lemmatized_string)
-            
-            #lemmatize each word and choose the shortest word of suggested lemmatizations
-            lemmatized_string = [min(lemmatizer.lemmatize('', word), key=len) for word in lemmatized_string]
+        #split words and lowercase them unless they are all caps
+        lemmatized_string = [word.lower() if not word.isupper() else word for word in matches]
+        
+        #remove words that are in the stopwords file
+        if remove_stopwords_:
+            lemmatized_string = remove_stopwords(lemmatized_string)
+        
+        #lemmatize each word and choose the shortest word of suggested lemmatizations
+        lemmatized_string = [min(lemmatizer.lemmatize('', word), key=len) for word in lemmatized_string]
 
-            #remove words that are in the stopwords file
-            if remove_stopwords_:
-                lemmatized_string = remove_stopwords(lemmatized_string)
+        #remove words that are in the stopwords file
+        if remove_stopwords_:
+            lemmatized_string = remove_stopwords(lemmatized_string)
 
         lemma_list.append(' '.join(lemmatized_string))
 

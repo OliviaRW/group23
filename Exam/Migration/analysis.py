@@ -1,20 +1,10 @@
-import requests, time, os, random
-import pandas as pd 
-import numpy as np
-from bs4 import BeautifulSoup
-from scraping_class import Connector
-import collections
-import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter
+from dependencies import *
 from data_cleaning import *
-import matplotlib
-import datetime
-import seaborn as sns
 
 def plot1():
     fmt = DateFormatter(r'%y-%m')
 
-    article_data = data_cleaning.article_volume_by_word(pd.read_csv('/Users/sebastianbaltser/Documents/GitHub/group23/Exam/Migration/dr_frequent_articles.csv', header = 0), dictionary = ['asylansøg'], groupby = 'D', lemmatize = True)
+    article_data = article_volume_by_word(pd.read_csv('/Users/sebastianbaltser/Documents/GitHub/group23/Exam/Migration/dr_frequent_articles.csv', header = 0), dictionary = ['asylansøg'], groupby = 'D', lemmatize = True)
     article_data.index = article_data.index.to_timestamp()
     article_data = article_data[article_data.index.year >= 2010]
 
@@ -56,24 +46,27 @@ def plot2():
     ax.plot(df)
     ax.set_ylabel('Number of articles')
 
-def get_modifiers(df, dictionary, remove_stopwords = True, n = 1):
-    
-    df['Text'] = lemmatize_strings(df['Text'], remove_stopwords_ = False)
+def get_modifiers(df, dictionary, remove_stopwords_ = True, n = 1):
+    strings = [string.split(' ') for string in lemmatize_strings(df['Text'], remove_stopwords_ = False)]
     articles = []
-    for word in dictionary:
-        modifiers = []
-        stop = False
-        while not stop:
-            try:
-                idx = string.index(word)
-                modifiers.append(tuple(string[idx-2:idx]))
-                string = string[idx+1:]
-            except:
-                stop = True
-        articles.append(modifiers)
+    for string in strings:
+        for word in dictionary:
+            modifiers = []
+            stop = False
+            while not stop:
+                try:
+                    idx = string.index(word)
+                    modifiers.append(tuple(string[idx-n:idx]))
+                    string = string[idx+1:]
+                except:
+                    stop = True
+            articles.append(modifiers)
+    if remove_stopwords_:
+        articles = [collections.Counter(remove_stopwords(lst)) for lst in articles]
+    else: 
+        articles = [collections.Counter(lst) for lst in articles]
 
-    articles = [collections.Counter(remove_stopwords(lst)) for lst in articles]
-
+    pd.DataFrame(articles).to_csv('modifiers.csv')
 
 if __name__ == "__main__":
-    plot1()
+    get_modifiers(pd.read_csv('dr_frequent_articles.csv'), ['flygtning'], n = 2)

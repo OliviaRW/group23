@@ -1,8 +1,4 @@
-import requests, json
-import numpy as np
-import pandas as pd
-from scraping_class import Connector
-import matplotlib.pyplot as plt
+from dependencies import *
 
 class dst_api():
     def __init__(self, logfile):

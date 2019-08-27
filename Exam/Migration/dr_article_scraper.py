@@ -1,8 +1,4 @@
-import requests, time, os, random
-import pandas as pd 
-import numpy as np
-from bs4 import BeautifulSoup
-from scraping_class import Connector
+from dependencies import *
 
 class dr_scraper():
     def __init__(self, logfile, links_file = 'dr_links.csv', contents_file = 'dr_contents.csv'):
