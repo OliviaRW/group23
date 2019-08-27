@@ -57,9 +57,11 @@ def plot2():
     ax.set_ylabel('Number of articles')
 
 def get_modifiers(df, dictionary, remove_stopwords = True, n = 1):
-    df['Text'] = lemmatize_strings(df['Text'], 
-    modifiers = []
+    
+    df['Text'] = lemmatize_strings(df['Text'], remove_stopwords_ = False)
+    articles = []
     for word in dictionary:
+        modifiers = []
         stop = False
         while not stop:
             try:
@@ -68,6 +70,9 @@ def get_modifiers(df, dictionary, remove_stopwords = True, n = 1):
                 string = string[idx+1:]
             except:
                 stop = True
+        articles.append(modifiers)
+
+    articles = [collections.Counter(remove_stopwords(lst)) for lst in articles]
 
 
 if __name__ == "__main__":

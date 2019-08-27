@@ -7,6 +7,7 @@ import collections
 from unicodedata import normalize
 import re
 import matplotlib.pyplot as plt
+import datetime
 
 def contains_string(text, string):
     """Helper function for article_volume_by_words.
@@ -194,14 +195,19 @@ def clean_article_counts(filename, categories, subcategories = None):
     df.to_csv('cleaned_' + filename, header = True, index = False)
 
 def clean_dr_articles():
-    df = pd.read_csv('dr_contents.csv', header = 0)
-    dictionary = ['flygtning', 'migrant', 'asylansøg', 'indvandre', 'immigrant']
+    #df = pd.read_csv('dr_contents.csv', header = 0)
+    #dictionary = ['flygtning', 'migrant', 'asylansøg', 'indvandre', 'immigrant']
     
-    get_frequent_articles(df, dictionary)
+    #get_frequent_articles(df, dictionary)
+
+    #df = pd.read_csv('dr_frequent_articles.csv', header = 0, index_col = 0)
+    #df['Publish date'] = pd.to_datetime(df['Publish date'])
+    #df = df[df['Publish date'].dt.year >= 2010]
+
+    #df.to_csv('dr_frequent_articles.csv', header = True, index = False)
 
     clean_article_counts('dr_article_counts.csv', ['nyheder'])
 
 
 if __name__ == "__main__":
-    df = pd.read_csv('article_volume_by_word.csv', header = 0, index_col = 'Publish date')
-    plot_word_frequencies(df, dictionary=['flygtning', 'asylansøg'])
+    clean_dr_articles()
