@@ -12,5 +12,5 @@ from scraping_class import Connector
 
 import seaborn as sns
 
-colorpalette = 'hls'
-sns.set_palette(colorpalette, 11)
+#colorpalette = 'hls'
+#sns.set_palette(colorpalette, 11)

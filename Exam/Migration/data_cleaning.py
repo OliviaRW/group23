@@ -93,59 +93,6 @@ def count_occurences(body_text, dictionary = None, lemmatize = False, **kw):
     else:
         return [collections.Counter(string.split(' ')) for string in body_text]
 
-def plot_word_frequencies(df, dictionary = None, top_n = None):
-    """Plots a plot of word frequencies over time.
-
-    -- df: dataframe containing word counts, with x as index and words as columns
-    -- dictionary: words that should be included in the plot
-    -- top_n: if no dictionary is passed the function plots the top_n most common words
-    """
-
-    fig, ax = plt.subplots()
-    x = df.index
-
-    if dictionary:
-        for column in dictionary:
-            ax.plot(x, df[column], label = column)
-    else:
-        for column in list(df.columns):
-            ax.plot(x, df[column], label = column)
-
-    ax.legend()
-    
-    ax.set_xticklabels(x, rotation = 45) #rotate labels
-
-    #remove most labels
-    for i, label in enumerate(ax.get_xticklabels()):
-        if i % 11 != 0 and i % 5 != 0:
-            label.set_visible(False)
-
-    plt.show()
-
-def article_volume_by_word(df, dictionary, groupby = 'w', lemmatize = False, **kw):
-    """Function that counts the number of articles containing each of the words in dictionary.
-    Returns a dataframe with groupby as index and words as columns.
-
-    -- df: Dataframe contaning the articles.
-    -- dictionary: list of words to look for in articles.
-    -- groupby: code that pandas should group the datetime columnn by.
-    -- lemmatize: bool that indicates wether the text should be lemmatized
-    -- **kw: keyword arguments for lemmatize_string()
-    """
-
-    if lemmatize:
-        df['Text'] = lemmatize_strings(df['Text'], **kw) #lemmatize if requested
-
-    df['Publish date'] = pd.to_datetime(df['Publish date'])
-
-    counts = {} #Dictionary to hould Series of counts for each word in dictionary
-    
-    for string in dictionary:
-        grouped_df = df['Text'].apply(contains_string, string = string) #Check if text contains string
-        counts[string] = grouped_df.groupby(df['Publish date'].dt.to_period('w')).sum() #Group and sum
-
-    return pd.DataFrame.from_dict(counts)
-
 def get_frequent_articles(df, dictionary, n = 3):
     """Function to filter out articles that does not contain a certain amount of words in dictionary.
     
