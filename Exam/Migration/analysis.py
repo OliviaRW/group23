@@ -52,9 +52,6 @@ def plot1():
     ax1.hlines(y = second_mean, xmin = first_mean_end_date, xmax = third_mean_start_date, color = color, linestyle = '--')
     ax1.hlines(y = third_mean, xmin = third_mean_start_date, xmax = datetime.date(2020, 1, 1), color = color, linestyle = '--')
 
-    #text
-    ax1.plot
-
     #Set limits
     ax1.set_ylim([0, 50])
     ax1.set_xlim([datetime.date(2010, 1, 1), datetime.date(2019, 8, 31)])
@@ -154,7 +151,7 @@ def plot3():
     fig, ax = plt.subplots(figsize = (18, 4))
 
     #Plotting of outer ax
-    ax.bar(x = grouped_df.index, height = grouped_df, width = 7, label = 'Number of articles')
+    ax.bar(x = grouped_df.index, height = grouped_df, width = 7, label = 'Number of articles', color = (0.86, 0.3712, 0.33999999999999997))
 
     #Format x-axis
     ax.xaxis.set_major_formatter(fmt)
@@ -187,6 +184,14 @@ def get_modifiers(df, dictionary, remove_stopwords_ = True, n = 1):
         articles = [collections.Counter(lst) for lst in articles]
 
     pd.DataFrame(articles).to_csv('modifiers.csv')
+
+def contains_string(text, string):
+    """Helper function for article_volume_by_words.
+    
+    -- text: text to be checked for string
+    -- string: string to be checked for in text
+    """
+    return 1 if string in str(text) else 0
 
 def article_volume_by_word(df, dictionary, groupby = 'w', lemmatize = False, **kw):
     """Function that counts the number of articles containing each of the words in dictionary.
@@ -241,5 +246,19 @@ def plot_word_frequencies(df, dictionary = None, top_n = None):
 
     plt.show()
 
+def word_frequencies(dictionary = None):
+    df = pd.read_csv('dr_frequent_articles.csv', header = 0, parse_dates = ['Publish date']) #load data
+
+    grouped_df = df.groupby(df['Publish date'].dt.to_period('w'))['Text'].apply(lambda x: ' '.join(x)) #group by month and join strings within the same month.
+    counts = count_occurences(grouped_df, dictionary = dictionary, lemmatize = True, language = 'da') #count words
+
+    if not dictionary:
+        dictionary = [[c[0] for c in count.most_common(10)] for count in counts]
+        counts = [{key: count[key] for key in dictionary} for dictionary, count in zip(dictionary, counts)]
+
+    freq_df = pd.DataFrame(counts, index = grouped_df.index) #dataframe of counts with words as columns and months as index
+
+    freq_df.to_csv('dr_wordfrequencies.csv', header = True)
+
 if __name__ == "__main__":
-    plot1()
+    plot3()

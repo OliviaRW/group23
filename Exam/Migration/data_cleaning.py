@@ -1,27 +1,5 @@
 from dependencies import *
 
-def contains_string(text, string):
-    """Helper function for article_volume_by_words.
-    
-    -- text: text to be checked for string
-    -- string: string to be checked for in text
-    """
-    return 1 if string in str(text) else 0
-
-def word_frequencies(dictionary = None):
-    df = pd.read_csv('dr_frequent_articles.csv', header = 0, parse_dates = ['Publish date']) #load data
-
-    grouped_df = df.groupby(df['Publish date'].dt.to_period('w'))['Text'].apply(lambda x: ' '.join(x)) #group by month and join strings within the same month.
-    counts = count_occurences(grouped_df, dictionary = dictionary, lemmatize = True, language = 'da') #count words
-
-    if not dictionary:
-        dictionary = [[c[0] for c in count.most_common(10)] for count in counts]
-        counts = [{key: count[key] for key in dictionary} for dictionary, count in zip(dictionary, counts)]
-
-    freq_df = pd.DataFrame(counts, index = grouped_df.index) #dataframe of counts with words as columns and months as index
-
-    freq_df.to_csv('dr_wordfrequencies.csv', header = True)
-
 def remove_stopwords(lst):
     with open('stopord.txt', 'r') as sw:
         #read the stopwords file 
